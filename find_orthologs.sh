@@ -55,7 +55,7 @@ while [ $1 ]; do
 		"-cons") shift; clim=$1;;
 		"-coeff") shift; coeff=$1;; #coefficiente per il controllo statistico
 		"-make-dir") makedir=1;;
-		"-help") echo "File di help in realizzazione"; exit;;
+		"-help") cat ./README.txt; exit;;
 		*) echo "Opzione errata: $1"; exit;;
 	esac
 	shift

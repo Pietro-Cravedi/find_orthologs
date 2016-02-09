@@ -1,5 +1,7 @@
 #!/usr/bin/perl -w
 
+#rimossa l'opzione cds per la mancanza dei file; da implementare usando la feature table
+
 my %urls;
 
 for ($i=0;$i<=$#ARGV;$i++){
@@ -23,24 +25,23 @@ die ("download_genomes.pl: Directory di output non specificata\n") if (!$type);
 
 `mkdir $outdir` if (!-e $outdir);
 
-if ($type eq "cds"){
-	$suffix = "ffn";
-}
-elsif ($type eq "protein"){
-	$suffix = "faa";
+if ($type eq "protein"){
+	$suffix = "protein.faa.gz";
+	$filend = "faa";
 }
 elsif ($type eq "genomic"){
-	$suffix = "fna";
+	$suffix = "genomic.fna.gz";
+	$filend = "fna"
 }
 else{
-	die("download_genomes.pl: -type può essere solo cds, genomic o protein\n");
+	die("download_genomes.pl: -type può essere solo genomic o protein\n");
 }
 
 open (Fhi,"<$table") or die ("download_genomes.pl: Impossibile aprire $table");
 while (<Fhi>){
 	chomp;
 	my @line = split(/\t/,$_);
-	$line[2]=~/(\S+).\d/;
+	$line[0]=~/(\S+).\d/;
 	my $an = $1;
 	my $path = $line[3];
 	$urls{$an}=$path;
@@ -53,8 +54,10 @@ while(<Fhi>){
 	chomp;
 	$_=~/^\d{3}_(\S+)/;
 	my $acc = $1;
-	my $path = "ftp://ftp.ncbi.nlm.nih.gov/genomes/archive/old_refseq/ASSEMBLY_BACTERIA/$urls{$acc}/*.$suffix";
+	my $path = "$urls{$acc}/*.$suffix";
 	print "Downloading: $path\n";
-	`wget -qO $outdir\/$acc.$suffix $path`;
+	`wget -qO $outdir\/$acc.$filend $path`;
+	`gzip -d $outdir\/$acc.$filend`;
+	`chmod 666 $outdir\/$acc.$filend`;
 }
 close Fhi;

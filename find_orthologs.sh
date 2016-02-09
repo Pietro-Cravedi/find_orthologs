@@ -277,23 +277,6 @@ if [ $do_download == 1 ]; then
 	#download genomi
 	$download_cmd -table $table_def -file $orglist -type $downloadtype -outdir $rawgendir
 	$download_cmd -table $table_def -file $orglist -type genomic -outdir $rawwholegendir
-	chmod 666 $rawgendir/*
-	chmod 666 $rawwholegendir/*
-
-	#controllare bontà dei file (escludere eventuali .gz)
-	for gen in $rawgendir/*; do
-		fline=`head -1 $gen`
-		if [ ${#fline} == 0 ]; then
-			remove=`basename $gen`
-			remove=${remove/.*/}
-			grep "$remove" $guidefile -v > $tmpfile
-			mv $tmpfile $guidefile
-			grep "$remove" $orglist -v > $tmpfile
-			mv $tmpfile $orglist
-			taxid=`grep $remove $table_def | cut -f 2`
-			echo "Salto $taxid: file non valido" >> $table_log
-		fi
-	done
 else
 	echo "Salto lo step di download"
 fi

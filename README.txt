@@ -20,32 +20,34 @@ Avaiable options:
 						the other 2 directories will be created by this pipeline
 						if you use this option you should also use -skip download
 	-source-table		file path of the correspondence table containing ANs, organism names, taxids and download 
-						paths. See default table for an example. Default: ./source/prokaryotes.txt
-	-table-location		"online" or "offline". Default: offline. Change to online if you provided a URL in -source-table
+						paths. See default table for an example. DEFAULT: ./source/prokaryotes.txt
+	-table-location		"online" or "offline". DEFAULT: offline. Change to online if you provided a URL in -source-table
 						and you want to download it
 	-correct-table		which ANs/taxids/organism/etc. You want to remove from the table. Useful in case of multiple ANs
 						corresponding to the same taxid to avoid accidental overwrite
 	-skip				which steps of this pipeline you want to skip. Can be "tree", "download", "tblastn", "blast",
 						"reformat", "ortholuge", "stat", "bbh", "bth". You can select multiple values separating them
 						with a comma
-	"-jump-to") shift; jump=$1;;
-	"-quit-after") shift; quit=$1;;
-	"-bindir") shift; bindir=$1;;
-	"-tree") shift; tree=$1;;			#obbligatorio
-	"-begin") shift; firstorg=$1;;		#obbligatorio
-	"-query") shift; query=$1;;			#obbligatorio
-	"-outgroup") shift; out_taxid=$1;;
-	"-stop") shift; lastorg=$1;;		#obbligatorio
-	"-type") shift; seqtype=$1;;		#obbligatorio
-	"-expect") shift; expect=$1;;
-	"-ortholuge") shift; ortbindir=$1;;	#obbligatorio
-	"-workdir") shift; workdir=$1;;
-	"-nofilt") nofilt=1;;
-	"-mode") shift; mode=$1;;
-	"-c1") shift; c1=$1;;
-	"-c2") shift; c2=$1;;
-	"-c3") shift; c3=$1;;
-	"-cons") shift; clim=$1;;
-	"-coeff") shift; coeff=$1;; #coefficiente per il controllo statistico
-	"-make-dir") makedir=1;;
+	-jump-to			start the pipeline directly from a checkpoint. NOTE: you must have in you work directory ALL the
+						files and folders created by the steps you skipped. Can be "download", "blast", "ortholuge" or
+						"analysis"
+	-quit-after			stop the pipeline at a certain checkpoint. Cleanup step will be skipped with this option allowing
+						you to restart from where you stopped. Can be "end", "table", "download", "blast" o "ortholuge"
+	-bindir				the directory where the scripts invoked by the pipeline are stored. DEFAULT: ./bin
+	-tree				the file containing the phylogenetic tree with taxids as leaves. COMPULSORY
+	-begin				one of the two organisms which will determine the borders of the organism rage to be analized.
+						You must specify a taxid. COMPULSORY
+	-query				taxid of the query genome. COMPULSORY
+	-outgroup			taxid of the organism you wish to use as outgroup to every other organism.
+	-stop				the other of the two organisms which will determine the borders of the organism rage to be
+						analized. You must specify a taxid. COMPULSORY
+	-type				is your sequence "dna" or "protein"? COMPULSORY
+	-expect				E-value threshold for BLAST. DEFAULT: 1e-04
+	-ortholuge			directory where you have installed Ortholuge. COMPULSORY
+	-workdir			working directory. DEFAULT: ./
+	-nofilt				use this option if you do not want to filter Ortholuge results
+	-c1, -c2, -c3		coefficients which will be used to determine the thresholds for the filter on Ortholuge results
+						relative to R1, R2, R3 respectively. DEFAULT: 1.5, 1.5, 3
+	-cons				how many outgroups must at leas confirm your orthologs pairs? DEFAULT: 1
+	-make-dir			don't run
 	

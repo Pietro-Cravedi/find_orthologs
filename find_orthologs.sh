@@ -1,8 +1,8 @@
 #!/bin/sh
 
 #valori di default
-source_tab="./source/prokaryotes.txt"
-table_location="offline"
+source_tab="ftp://ftp.ncbi.nlm.nih.gov/genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.txt"
+table_location="online"
 bindir="./bin/"
 expect="1e-04"
 c1=1
@@ -238,9 +238,9 @@ if [ $do_tree == 1 ]; then
 			mv $tmpfile $table_raw
 		done
 	fi
-	cut -f 1,2,9,24 $table_raw | tail -n +2 > $table_int
+	cut -f 1,6,8,20 $table_raw | tail -n +2 > $table_int
 	$check_cmd -table $table_int -list $taxidlist -out $table_def > $table_log
-	while read line; do 
+	while read line; do #rimuove i taxid degli organismi saltati dai file guida
 		taxid=`echo $line|awk '{print $3}'`
 		grep -v $taxid $taxidlist > $tmpfile
 		mv $tmpfile $taxidlist

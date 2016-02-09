@@ -24,9 +24,8 @@ while (<Fhi>){
 	chomp;
 	my @line = split(/\t/,$_);
 	my $taxid = $line[1];
-	$line[2]=~/(\S+).\d/;
+	$line[0]=~/(\S+)\.\d/;
 	my $an = $1;
-	my $path = $line[3];
 	$ans{$taxid}=$an;
 }
 close Fhi;

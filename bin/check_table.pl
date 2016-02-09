@@ -21,7 +21,7 @@ die ("check_table.pl: -out non specificato\n") if (!$outfile);
 my @list;
 my @good;
 
-#creare array con gli an necessari
+#creare array con i taxid necessari
 open (Fhi,"<$infile") or die ("check_table.pl: Impossibile aprire $infile\n");
 while (<Fhi>){
 	chomp;
@@ -38,9 +38,9 @@ while(<Fhi>){
 	my @line = split(/\t/,$_);
 	$org=$line[1];
 	$originals{$org} = $_;
-	$names{$org}=$line[0];
+	$names{$org}=$line[2];
 	$taxids{$org}=$line[1];
-	$ans{$org}=$line[2];
+	$ans{$org}=$line[0];
 	$paths{$org}=$line[3];
 }
 close Fhi;

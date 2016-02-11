@@ -146,7 +146,7 @@ remdup_bbh_cmd="perl $bindir/remove_duplicates_bbh.pl"
 desc_cmd="perl $bindir/add_description.pl -f 1 -h true"
 bbh_cmd="perl $bindir/find_best_blast.pl -type $seqtype -blastdir $blastdir"
 bth_cmd="perl $bindir/find_best_tblastn.pl -blastdir $tblastndir"
-names_cmd="perl $bindir/add_names.pl -nf 1 -af 3 -m add -t $table_def"
+names_cmd="perl $bindir/add_names.pl -nf 3 -af 1 -m add -t $table_def"
 
 #individuazione checkpoint
 if [ $custom_source ]; then

@@ -64,7 +64,7 @@ done
 #controlli su argomenti
 if [ ! -d $ortbindir ]; then echo "-ortbindir non esiste o non è una directory"; exit; fi
 if [ ! -d $bindir ]; then echo "-bindir non esiste o non è una directory"; exit; fi
-if [ $custom_source -a ! -d $custom_source ]; then echo "-source-dir non esiste o non è una directory"; exit; fi
+#if [ $custom_source -a ! -d $custom_source ]; then echo "-source-dir non esiste o non è una directory"; exit; fi
 if [ ! $seqtype ]; then echo "-seqtype non specificato"; exit; fi
 if [ ! $tree ]; then echo "-tree non specificato"; exit; fi
 if [ ! $query ]; then echo "-query non specificato"; exit; fi

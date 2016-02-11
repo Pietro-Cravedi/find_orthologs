@@ -54,10 +54,12 @@ while(<Fhi>){
 	chomp;
 	$_=~/^\d{3}_(\S+)/;
 	my $acc = $1;
-	my $path = "$urls{$acc}/*.$suffix";
+	my $path = "$urls{$acc}/*_$suffix";
 	print "Downloading: $path\n";
-	`wget -qO $outdir\/$acc.$filend $path`;
-	`gzip -d $outdir\/$acc.$filend`;
+	#`wget -qO $outdir\/$acc.$filend.gz $path`;
+	`wget -qP $outdir $path`;
+	`mv $outdir\/*_$suffix $outdir\/$acc.$filend.gz`;
+	`gzip -d $outdir\/$acc.$filend.gz`;
 	`chmod 666 $outdir\/$acc.$filend`;
 }
 close Fhi;

@@ -25,6 +25,8 @@ do_ortholuge=1
 do_stat=1
 do_bbh=1
 do_bth=1
+do_refine=1
+do_cleanup=1
 coeff=1
 
 #acquisizione argomenti
@@ -70,7 +72,6 @@ if [ ! $tree ]; then echo "-tree non specificato"; exit; fi
 if [ ! $query ]; then echo "-query non specificato"; exit; fi
 if [ ! $lastorg ]; then echo "-stop non specificato"; exit; fi
 if [ ! $firstorg ]; then echo "-begin non specificato"; exit; fi
-if [ $quit != "download" -a $quit != "blast" -a $quit != "ortholuge" -a $quit != "end" -a $quit != "table" ]; then echo "-quit-after può essere solo end, table, download, blast o ortholuge"; exit; fi
 if [ $mode != "mean" -a $mode != "median" ]; then echo "-mode può essere solo mean o median"; exit; fi
 if [ $table_location != "online" -a $table_location != "offline" ]; then echo "-table_location può essere solo online o offline"; exit; fi
 
@@ -160,6 +161,8 @@ if [ $skip ]; then
 	"stat")do_stat=0;;
 	"bbh") do_bbh=0;;
 	"bth") do_bth=0;;
+	"refine") do_refine=0;;
+	"cleanup") do_cleanup=0;;
 	*) echo "Argomento errato per -skip"; exit;;
 	esac; done
 fi
@@ -167,9 +170,18 @@ fi
 if [ $jump ]; then case $jump in
 	"download") do_tree=0;;
 	"blast") do_tree=0; do_download=0;;
-	"ortholuge") do_tree=0; do_download=0; do_blast=0; do_reformat=0;;
-	"analysis") do_tree=0; do_download=0; do_blast=0; do_reformat=0; do_ortholuge=0;;
+	"ortholuge") do_tree=0; do_download=0; do_blast=0; do_reformat=0; do_tblastn=0;
+	"analysis") do_tree=0; do_download=0; do_blast=0; do_reformat=0; do_ortholuge=0; do_tblastn=0;;
 	*) echo "Argomento errato per -jump-to"; exit;;
+esac; fi
+
+if [ $quit ]; then case $quit in
+	"tree") do_download=0; do_tblastn=0; do_blast=0; do_reformat=0; do_ortholuge=0; do_stat=0; do_bbh=0; do_bth=0; do_refine=0;;
+	"download") do_tblastn=0; do_blast=0; do_reformat=0; do_ortholuge=0; do_stat=0; do_bbh=0; do_bth=0; do_refine=0;;
+	"blast") do_ortholuge=0; do_stat=0; do_bbh=0; do_bth=0; do_refine=0;;
+	"ortholuge") do_stat=0; do_bbh=0; do_bth=0; do_refine=0;;
+	"stat") do_bbh=0; do_bth=0; do_refine=0;;
+	*) echo "Argomento errato per -quit-after"; exit;;
 esac; fi
 
 #definizione suffisso genomi
@@ -258,7 +270,6 @@ fi
 
 #primo checkpoint
 echo "Primo checkpoint raggiunto"
-if [ $quit == "table" ]; then exit; fi
 
 #controllare se c'è il file guida, in caso di skip, verificare che sia nella cartella archivio
 if [ ! -r $guidefile ]; then
@@ -283,8 +294,6 @@ fi
 
 #primo checkpoint - fin qui tutto ok
 echo "Secondo checkpoint raggiunto"
-if [ $quit == "download" ]; then exit; fi
-
 
 #effettuare i blast - solo quelli richiesti
 #riformattare i genomi
@@ -383,7 +392,6 @@ else
 fi
 
 echo "Terzo checkpoint raggiunto"
-if [ $quit == "blast" ]; then exit; fi
 
 #ortholuge
 if [ $do_ortholuge == 1 ]; then
@@ -425,7 +433,6 @@ fi
 
 #quarto checkpoint
 echo "Quarto checkpoint raggiunto"
-if [ $quit == "ortholuge" ]; then exit; fi
 
 #inizializzare variabili che servono da qui in poi - bisogna usare i file di proteomi per le descrizioni
 q=`cut -f1 $guidefile | uniq`
@@ -593,30 +600,35 @@ else
 fi
 
 #rimuovere duplicati bbh
-if [ -a $do_bbh == 1 ]; then
+if [ $do_bbh == 1 ]; then
 	$remdup_bbh_cmd -file $outfile > $tmpfile
 	mv $tmpfile $outfile
 fi
 
 #aggiungere descrizioni
-echo "Aggiunta descrizioni e nomi organismi"
-if [ $seqtype == "protein" ]; then
-	$desc_cmd -o $outfile > $tmpfile
-	mv $tmpfile $outfile
-else
-	cp $in_first $outfile
+if [ $do_refine == 1 ]; then
+	echo "Aggiunta descrizioni e nomi organismi"
+	if [ $seqtype == "protein" ]; then
+		$desc_cmd -o $outfile > $tmpfile
+		mv $tmpfile $outfile
+	else
+		cp $in_first $outfile
+	fi
+
+
+	#aggiungere nomi organismi
+	$names_cmd -i $outfile > ${n_outfile}
 fi
 
-#aggiungere nomi organismi
-$names_cmd -i $outfile > ${n_outfile}
-
 #cleanup
-echo "Cleanup"
-rm -r $tmpdir
-rm -r $orttmpdir
-rm -r $ortfiltdir
-rm -r $unfiltdir
-rm -r $blasttmpdir
-rm $outfiltfile $outunfiltfile
-
+if [ $do_cleanup == 1 ]; then
+	echo "Cleanup"
+	rm -r $tmpdir
+	rm -r $orttmpdir
+	rm -r $ortfiltdir
+	rm -r $unfiltdir
+	rm -r $blasttmpdir
+	rm $outfiltfile $outunfiltfile
+fi
+	
 echo "Operazione completata"

@@ -20,7 +20,7 @@ do_tree=1
 do_download=1
 do_tblastn=1
 do_blast=1
-do_reformat=1
+do_reformat=0
 do_ortholuge=1
 do_stat=1
 do_bbh=1
@@ -86,11 +86,13 @@ tmpdir="$workdir/tmp_$query/"
 tmpfiltdir="$tmpdir/filtered_$query/"
 tmpunfiltdir="$tmpdir/unfiltered_$query/"
 orttmpdir="$workdir/ortholuge_tmp_$query/" #directory dove lavora ortholuge - ha $query nel nome per consentire operazioni parallele
-rawgendir="$sourcedir/raw_genomes/"
-refgendir="$sourcedir/ref_genomes/"
+#rawgendir="$sourcedir/raw_genomes/"
+#refgendir="$sourcedir/ref_genomes/"
+refgendir="$sourcedir/sequences/"
 tragendir="$sourcedir/translated_genomes/"
-rawwholegendir="$sourcedir/raw_whole_genomes/"
-refwholegendir="$sourcedir/ref_whole_genomes/"
+#rawwholegendir="$sourcedir/raw_whole_genomes/"
+#refwholegendir="$sourcedir/ref_whole_genomes/"
+refwholegendir="$sourcedir/whole_genomes/"
 ortrawdir="$workdir/ortholuge_raw_results/"
 guidedir="$workdir/guide_files/"
 ortfiltdir="$workdir/ortholuge_filtered_$query/"
@@ -202,9 +204,9 @@ if [ ! -d $tmpfiltdir ]; then mkdir $tmpfiltdir; fi
 if [ ! -d $tmpunfiltdir ]; then mkdir $tmpunfiltdir; fi
 if [ ! -d $orttmpdir ]; then mkdir $orttmpdir; fi
 if [ ! -d $ortrawdir ]; then mkdir $ortrawdir; fi
-if [ ! -d $rawgendir ]; then mkdir $rawgendir; fi
+#if [ ! -d $rawgendir ]; then mkdir $rawgendir; fi
 if [ ! -d $refgendir ]; then mkdir $refgendir; fi
-if [ ! -d $rawwholegendir ]; then mkdir $rawwholegendir; fi
+#if [ ! -d $rawwholegendir ]; then mkdir $rawwholegendir; fi
 if [ ! -d $refwholegendir ]; then mkdir $refwholegendir; fi
 if [ ! -d $tragendir -a $seqtype == "dna" ]; then mkdir $tragendir; fi
 if [ ! -d $guidedir ]; then mkdir $guidedir; fi
@@ -286,8 +288,8 @@ fi
 
 if [ $do_download == 1 ]; then
 	#download genomi
-	$download_cmd -table $table_def -file $orglist -type $downloadtype -outdir $rawgendir
-	$download_cmd -table $table_def -file $orglist -type genomic -outdir $rawwholegendir
+	$download_cmd -table $table_def -file $orglist -type $downloadtype -outdir $refgendir
+	$download_cmd -table $table_def -file $orglist -type genomic -outdir $refwholegendir
 else
 	echo "Salto lo step di download"
 fi
@@ -438,7 +440,7 @@ echo "Quarto checkpoint raggiunto"
 q=`cut -f1 $guidefile | uniq`
 baseorg=$refgendir/${q:4}.$suffix
 pad_cmd="$pad_cmd -g $baseorg"
-raworg=$rawgendir/`basename $baseorg .$suffix`.${protsuf}
+raworg=$refgendir/`basename $baseorg .$suffix`.${protsuf}
 desc_cmd="$desc_cmd -g $raworg"
 pairs_list=`while read line; do echo $line | awk '{print $1"_"$2}'; done < $guidefile | uniq`
 

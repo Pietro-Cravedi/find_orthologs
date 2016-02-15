@@ -48,3 +48,4 @@ for (acc in rownames(ssd.matrix)){
 		full.zscores[acc,i]<-zscore
 	}
 }
+

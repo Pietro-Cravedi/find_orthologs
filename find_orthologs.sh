@@ -106,6 +106,8 @@ guidefile="$guidedir/ort_guide_$query.txt"
 taxidguide="$guidedir/taxid_guide_$query.txt"
 taxidlist="$guidedir/taxid_list_$query.txt"
 statfile="$guidedir/statistics_$query.txt"
+fullfile="$tmpdir/full_$query.txt"
+ssdfile="$tmpdir/ssd_$query.txt"
 ssdmatfile="$guidedir/ssd_matrix_$query.txt"
 fullmatfile="$guidedir/full_matrix_$query.txt"
 distfile="$guidedir/distribution_$query.txt"
@@ -145,6 +147,7 @@ ccount_cmd="perl $bindir/consensus_count.pl -h true"
 cfilt_cmd="perl $bindir/consensus_filter.pl -threshold $clim -header true"
 pad_cmd="perl $bindir/ortholuge_pad.pl -t true"
 remdup_bbh_cmd="perl $bindir/remove_duplicates_bbh.pl"
+parse_results_cmd="perl $bin/parse_results.pl -remove brh,nsd"
 read_dist_cmd="perl $bindir/read_distances.pl -description no -genrow 1 -header 1 -ortdir $ortrawdir -statfile $statfile"
 check_dist_cmd="Rscript $bindir/check_distribution.r -outfile $distfile"
 desc_cmd="perl $bindir/add_description.pl -f 1 -h true"
@@ -582,8 +585,16 @@ else
 fi
 
 #controllo statistiche - da qui in poi cambiare
-
+if [ $do_stat == 1 ]; then
+	#generare i file full e ssd, quindi applicare read_distances e check_distribution
+	cp $outfile $fullfile
+	$parse_results_cmd -file $fullfile > $ssdfile
+	$read_dist_cmd -file $fullfile > $fullmatfile
+	$read_dist_cmd -file $ssdfile > $ssdmatfile
+	$check_dist_cmd -ssd-matrix $ssdmatfile -full-matrix $fullmatfile
+fi
 #fine cambiamenti
+
 if [ $do_bth == 1 ]; then
 	echo "Ricerca bth"
 	$bth_cmd -file $outfile -query $baseorg > $tmpfile

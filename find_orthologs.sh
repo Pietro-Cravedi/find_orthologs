@@ -106,6 +106,9 @@ guidefile="$guidedir/ort_guide_$query.txt"
 taxidguide="$guidedir/taxid_guide_$query.txt"
 taxidlist="$guidedir/taxid_list_$query.txt"
 statfile="$guidedir/statistics_$query.txt"
+ssdmatfile="$guidedir/ssd_matrix_$query.txt"
+fullmatfile="$guidedir/full_matrix_$query.txt"
+distfile="$guidedir/distribution_$query.txt"
 orglist="$guidedir/org_list_$query.txt"
 table_raw="$guidedir/raw_tab_$query.txt"
 table_int="$guidedir/int_tab_$query.txt"
@@ -131,7 +134,6 @@ blastall_cmd="blastall -a 6 -p blastp"
 tblastn_cmd="blastall -a 6 -p tblastn -m 9"
 ortholuge_cmd="$ortbindir/ortholuge.pl --skip-blast yes --quiet --overwrite yes --bindir $ortbindir --workdir $orttmpdir --seqtype $seqtype"
 stat_calc_cmd="Rscript $bindir/calculate_stat_cols.r -outfile $statfile"
-stat_check_cmd="perl $bindir/cols_stat_check.pl -mode $mode -coeff $coeff"
 ort_filter_cmd="Rscript $bindir/filter_ratios.r"
 reformat_db_cmd="perl $bindir/reformat_db.pl -type $seqtype"
 reformat_genome_cmd="perl $bindir/reformat_db.pl -type genomic"
@@ -143,6 +145,8 @@ ccount_cmd="perl $bindir/consensus_count.pl -h true"
 cfilt_cmd="perl $bindir/consensus_filter.pl -threshold $clim -header true"
 pad_cmd="perl $bindir/ortholuge_pad.pl -t true"
 remdup_bbh_cmd="perl $bindir/remove_duplicates_bbh.pl"
+read_dist_cmd="perl $bindir/read_distances.pl -description no -genrow 1 -header 1 -ortdir $ortrawdir -statfile $statfile"
+check_dist_cmd="Rscript $bindir/check_distribution.r -outfile $distfile"
 desc_cmd="perl $bindir/add_description.pl -f 1 -h true"
 bbh_cmd="perl $bindir/find_best_blast.pl -type $seqtype -blastdir $blastdir"
 bth_cmd="perl $bindir/find_best_tblastn.pl -blastdir $tblastndir"
@@ -577,22 +581,9 @@ else
 	cp $outunfiltfile $outfile
 fi
 
-#controllo statistiche
-if [ $do_stat == 1 ]; then
-	echo "Controllo statistiche"
-	$stat_check_cmd -infile $outfile -statfile $statfile -ortdir $ortrawdir > $tmpfile
-	mv $tmpfile $outfile
-fi
+#controllo statistiche - da qui in poi cambiare
 
-#per i geni non trovati andare a vedere se c'è un risultato di blast e prendere il migliore
-if [ $do_bbh == 1 ]; then
-	echo "Ricerca bbh"
-	$bbh_cmd -file $outfile > $tmpfile
-	mv $tmpfile $outfile
-else
-	echo "Salto ricerca bth"
-fi
-
+#fine cambiamenti
 if [ $do_bth == 1 ]; then
 	echo "Ricerca bth"
 	$bth_cmd -file $outfile -query $baseorg > $tmpfile

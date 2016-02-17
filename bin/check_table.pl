@@ -1,6 +1,7 @@
 #!/usr/bin/perl -w
 
 $outfile="./log.txt";
+$type="new";
 
 for ($i=0;$i<=$#ARGV;$i++){
 	if ($ARGV[$i] eq "-table"){
@@ -12,6 +13,9 @@ for ($i=0;$i<=$#ARGV;$i++){
 	elsif ($ARGV[$i] eq "-out"){
 		$outfile = $ARGV[$i+1]  if ($ARGV[$i+1]);
 	}
+	elsif ($ARGV[$i] eq "-type"){
+		$type = $ARGV[$i+1] if ($ARGV[$i+1]);
+	}
 }
 
 die ("check_table.pl: -table non specificato\n") if (!$table);
@@ -20,6 +24,24 @@ die ("check_table.pl: -out non specificato\n") if (!$outfile);
 
 my @list;
 my @good;
+
+if ($type eq "new"){
+	$oi=1;
+	$ni=2;
+	$ai=0;
+	$pi=3;
+	$ti=1;
+}
+elsif ($type eq "old"){
+	$oi=1;
+	$ni=0;
+	$ai=2;
+	$pi=3;
+	$ti=1;
+}
+else{
+	die ("check_table.pl: valore non valido per -type\n");
+}
 
 #creare array con i taxid necessari
 open (Fhi,"<$infile") or die ("check_table.pl: Impossibile aprire $infile\n");
@@ -31,17 +53,16 @@ while (<Fhi>){
 }
 close Fhi;
 
-
 open (Fhi,"<$table") or die ("check_table.pl: Impossibile aprire $table\n");
 while(<Fhi>){
 	chomp;
 	my @line = split(/\t/,$_);
-	$org=$line[1];
+	$org=$line[$oi];
 	$originals{$org} = $_;
-	$names{$org}=$line[2];
-	$taxids{$org}=$line[1];
-	$ans{$org}=$line[0];
-	$paths{$org}=$line[3];
+	$names{$org}=$line[$ni];
+	$taxids{$org}=$line[$ti];
+	$ans{$org}=$line[$ai];
+	$paths{$org}=$line[$pi];
 }
 close Fhi;
 

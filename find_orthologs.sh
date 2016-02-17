@@ -2,18 +2,17 @@
 
 #valori di default
 source_tab="ftp://ftp.ncbi.nlm.nih.gov/genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.txt"
+structure="new"
 table_location="online"
 bindir="./bin/"
 expect="1e-04"
-c1=1
-c2=1
-c3=1
+c1=1.5
+c2=1.5
+c3=3
 workdir="./workdir/"
-quit="end"
 clim=1
 dnasuf="ffn"
 protsuf="faa"
-mode="mean"
 nofilt=0
 makedir=0
 do_tree=1
@@ -27,12 +26,13 @@ do_bbh=1
 do_bth=1
 do_refine=1
 do_cleanup=1
-coeff=1
+
 
 #acquisizione argomenti
 while [ $1 ]; do
 	case $1 in
 		"-source-dir") shift; custom_source=$1;;
+		"-folder-structure")shift; structure=$1;;
 		"-source-table") shift; source_tab=$1;;
 		"-table-location") shift; table_location=$1;;
 		"-correct-table") shift; purge=$1;;
@@ -72,7 +72,6 @@ if [ ! $tree ]; then echo "-tree non specificato"; exit; fi
 if [ ! $query ]; then echo "-query non specificato"; exit; fi
 if [ ! $lastorg ]; then echo "-stop non specificato"; exit; fi
 if [ ! $firstorg ]; then echo "-begin non specificato"; exit; fi
-if [ $mode != "mean" -a $mode != "median" ]; then echo "-mode può essere solo mean o median"; exit; fi
 if [ $table_location != "online" -a $table_location != "offline" ]; then echo "-table_location può essere solo online o offline"; exit; fi
 
 #inizializzazione variabili - cartelle
@@ -86,13 +85,12 @@ tmpdir="$workdir/tmp_$query/"
 tmpfiltdir="$tmpdir/filtered_$query/"
 tmpunfiltdir="$tmpdir/unfiltered_$query/"
 orttmpdir="$workdir/ortholuge_tmp_$query/" #directory dove lavora ortholuge - ha $query nel nome per consentire operazioni parallele
-#rawgendir="$sourcedir/raw_genomes/"
-#refgendir="$sourcedir/ref_genomes/"
-refgendir="$sourcedir/sequences/"
+case $structure in
+	"old")rawgendir="$sourcedir/raw_genomes/";refgendir="$sourcedir/ref_genomes/";rawwholegendir="$sourcedir/raw_whole_genomes/"; refwholegendir="$sourcedir/ref_whole_genomes/";;
+	"new")refgendir="$sourcedir/sequences/";refwholegendir="$sourcedir/whole_genomes/";;
+	*)echo "Valore errato per -folder-structure"; exit;;
+esac
 tragendir="$sourcedir/translated_genomes/"
-#rawwholegendir="$sourcedir/raw_whole_genomes/"
-#refwholegendir="$sourcedir/ref_whole_genomes/"
-refwholegendir="$sourcedir/whole_genomes/"
 ortrawdir="$workdir/ortholuge_raw_results/"
 guidedir="$workdir/guide_files/"
 ortfiltdir="$workdir/ortholuge_filtered_$query/"
@@ -122,7 +120,7 @@ outfile="$workdir/${firstorg}_to_${lastorg}_q_${query}_e_${expect}"
 if [ $nofilt -eq 0 ]; then outfile="${outfile}_c1_${c1}_c2_${c2}_c3_${c3}"; else outfile="${outfile}_nofilt"; fi
 outfiltfile="$workdir/filtered_output_$query.txt"
 outunfiltfile="$workdir/unfiltered_output_$query.txt"
-outfile="${outfile}_m_${mode}_c_${clim}_coeff_${coeff}.txt"
+outfile="${outfile}_c_${clim}.txt"
 n_outfile="$workdir/n_`basename ${outfile}`"
 
 #inizializzazione variabili - comandi
@@ -130,13 +128,13 @@ tree2trip_cmd="Rscript $bindir/tree2triplets.r"
 trim_cmd="Rscript $bindir/trim_tree.r"
 taxid2genomes_cmd="perl $bindir/taxid2genomes.pl"
 download_cmd="perl $bindir/download_genomes.pl"
-check_cmd="perl $bindir/check_table.pl"
+check_cmd="perl $bindir/check_table.pl -type $structure"
 translate_cmd="perl $bindir/translate.pl"
 blastall_cmd="blastall -a 6 -p blastp"
 tblastn_cmd="blastall -a 6 -p tblastn -m 9"
 ortholuge_cmd="$ortbindir/ortholuge.pl --skip-blast yes --quiet --overwrite yes --bindir $ortbindir --workdir $orttmpdir --seqtype $seqtype"
 stat_calc_cmd="Rscript $bindir/calculate_stat_cols.r -outfile $statfile"
-ort_filter_cmd="Rscript $bindir/filter_ratios.r"
+ort_filter_cmd="Rscript $bindir/filter_ratios.r -c1 $c1 -c2 $c2 -c3 $c3"
 reformat_db_cmd="perl $bindir/reformat_db.pl -type $seqtype"
 reformat_genome_cmd="perl $bindir/reformat_db.pl -type genomic"
 out_merge_cmd="perl $bindir/merge_ortholuge_outwalking_new.pl -h true"
@@ -147,7 +145,7 @@ ccount_cmd="perl $bindir/consensus_count.pl -h true"
 cfilt_cmd="perl $bindir/consensus_filter.pl -threshold $clim -header true"
 pad_cmd="perl $bindir/ortholuge_pad.pl -t true"
 remdup_bbh_cmd="perl $bindir/remove_duplicates_bbh.pl"
-parse_results_cmd="perl $bin/parse_results.pl -remove brh,nsd"
+parse_results_cmd="perl $bindir/parse_results.pl -remove brh,nsd"
 read_dist_cmd="perl $bindir/read_distances.pl -description no -genrow 1 -header 1 -ortdir $ortrawdir -statfile $statfile"
 check_dist_cmd="Rscript $bindir/check_distribution.r -outfile $distfile"
 desc_cmd="perl $bindir/add_description.pl -f 1 -h true"
@@ -179,7 +177,7 @@ fi
 if [ $jump ]; then case $jump in
 	"download") do_tree=0;;
 	"blast") do_tree=0; do_download=0;;
-	"ortholuge") do_tree=0; do_download=0; do_blast=0; do_reformat=0; do_tblastn=0;
+	"ortholuge") do_tree=0; do_download=0; do_blast=0; do_reformat=0; do_tblastn=0;;
 	"analysis") do_tree=0; do_download=0; do_blast=0; do_reformat=0; do_ortholuge=0; do_tblastn=0;;
 	*) echo "Argomento errato per -jump-to"; exit;;
 esac; fi
@@ -193,11 +191,15 @@ if [ $quit ]; then case $quit in
 	*) echo "Argomento errato per -quit-after"; exit;;
 esac; fi
 
-#definizione suffisso genomi
+#definizione suffisso genomi e settings per il sito NCBI
 case $seqtype in 
 	"protein") suffix=$protsuf; formatdb_cmd="$formatdb_cmd -p T"; genpath="$refgendir"; downloadtype="protein";;
 	"dna") suffix=$dnasuf; formatdb_cmd="$formatdb_cmd -p T"; genpath="$tragendir"; downloadtype="cds";;
 	*) echo "-type può essere solo protein o dna"; exit;;
+esac
+case $structure in
+	"old")fields='1,2,9,24';;
+	"new")fields='1,6,8,20';;
 esac
 
 #creazione cartelle
@@ -259,7 +261,7 @@ if [ $do_tree == 1 ]; then
 			mv $tmpfile $table_raw
 		done
 	fi
-	cut -f 1,6,8,20 $table_raw | tail -n +2 > $table_int
+	cut -f $fields $table_raw | tail -n +2 > $table_int
 	$check_cmd -table $table_int -list $taxidlist -out $table_def > $table_log
 	while read line; do #rimuove i taxid degli organismi saltati dai file guida
 		taxid=`echo $line|awk '{print $3}'`
@@ -282,15 +284,15 @@ echo "Primo checkpoint raggiunto"
 
 #controllare se c'è il file guida, in caso di skip, verificare che sia nella cartella archivio
 if [ ! -r $guidefile ]; then
-	echo "Manca il file ort_guide.txt"; exit
+	echo "Manca il file $guidefile"; exit
 fi
 
 if [ ! -r $orglist ]; then
-	echo "Manca il file org_list.txt"; exit
+	echo "Manca il file $orglist"; exit
 fi
 
 if [ ! -r $table_def ]; then
-	echo "Manca il file table_def.txt"; exit
+	echo "Manca il file $table_def"; exit
 fi
 
 if [ $do_download == 1 ]; then
@@ -447,7 +449,11 @@ echo "Quarto checkpoint raggiunto"
 q=`cut -f1 $guidefile | uniq`
 baseorg=$refgendir/${q:4}.$suffix
 pad_cmd="$pad_cmd -g $baseorg"
-raworg=$refgendir/`basename $baseorg .$suffix`.${protsuf}
+if [ $structure == "new" ]; then
+	raworg=$refgendir/`basename $baseorg .$suffix`.${protsuf}
+else
+	raworg=$rawgendir/`basename $baseorg .$suffix`.${protsuf}
+fi
 desc_cmd="$desc_cmd -g $raworg"
 pairs_list=`while read line; do echo $line | awk '{print $1"_"$2}'; done < $guidefile | uniq`
 
@@ -467,10 +473,12 @@ for dir in $pairs_list; do
 	filename=`basename $dir | awk -F_ '{print $1"_"$2"_"$3"_"$4"_"$5"_"$6"__"$4"_"$5"_"$6".txt"}'`
 	filepath=$dir/$filename
 	if [ $do_stat == 1 ]; then
+		echo -e "\tAggiornamento file delle statistiche"
 		$stat_calc_cmd -infile $filepath
 	fi
 	if [ ! -d $ortfiltdir/`basename $dir` ]; then mkdir $ortfiltdir/` basename $dir`; fi
 	if [ ! -d $unfiltdir/`basename $dir` ]; then mkdir $unfiltdir/` basename $dir`; fi
+	echo -e "\tInizio filtro"
 	for file in $dir/*; do
 	if [ $nofilt == 1 ]; then
 		cut -f 1,2,3 $file > $unfiltdir/`basename $dir`/`basename $file`
@@ -479,6 +487,7 @@ for dir in $pairs_list; do
 		$ort_filter_cmd -infile $file > $ortfiltdir/`basename $dir`/`basename $file`
 	fi
 	done
+	echo -e "\tFine filtro"
 done
 #creata una cartella coi risultati filtrati e una coi risultati non filtrati
 
@@ -594,6 +603,14 @@ if [ $do_stat == 1 ]; then
 	$check_dist_cmd -ssd-matrix $ssdmatfile -full-matrix $fullmatfile
 fi
 #fine cambiamenti
+
+if [ $do_bbh == 1 ]; then
+	echo "Ricerca bbh"
+	$bbh_cmd -file $outfile > $tmpfile
+	mv $tmpfile $outfile
+else
+	echo "Salto ricerca bbh"
+fi
 
 if [ $do_bth == 1 ]; then
 	echo "Ricerca bth"

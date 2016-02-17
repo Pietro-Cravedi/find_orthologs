@@ -473,12 +473,10 @@ for dir in $pairs_list; do
 	filename=`basename $dir | awk -F_ '{print $1"_"$2"_"$3"_"$4"_"$5"_"$6"__"$4"_"$5"_"$6".txt"}'`
 	filepath=$dir/$filename
 	if [ $do_stat == 1 ]; then
-		echo -e "\tAggiornamento file delle statistiche"
 		$stat_calc_cmd -infile $filepath
 	fi
 	if [ ! -d $ortfiltdir/`basename $dir` ]; then mkdir $ortfiltdir/` basename $dir`; fi
 	if [ ! -d $unfiltdir/`basename $dir` ]; then mkdir $unfiltdir/` basename $dir`; fi
-	echo -e "\tInizio filtro"
 	for file in $dir/*; do
 	if [ $nofilt == 1 ]; then
 		cut -f 1,2,3 $file > $unfiltdir/`basename $dir`/`basename $file`
@@ -487,7 +485,6 @@ for dir in $pairs_list; do
 		$ort_filter_cmd -infile $file > $ortfiltdir/`basename $dir`/`basename $file`
 	fi
 	done
-	echo -e "\tFine filtro"
 done
 #creata una cartella coi risultati filtrati e una coi risultati non filtrati
 
@@ -588,6 +585,7 @@ fi
 
 #unire i file
 if [ $nofilt == 0 ]; then
+	echo "Merging finale"
 	$ort_merge_cmd -filtered $outfiltfile -unfiltered $outunfiltfile > $outfile
 else
 	cp $outunfiltfile $outfile

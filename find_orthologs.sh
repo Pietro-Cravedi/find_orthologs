@@ -26,6 +26,8 @@ do_bbh=1
 do_bth=1
 do_refine=1
 do_cleanup=1
+do_merge=1
+do_filter=1
 
 
 #acquisizione argomenti
@@ -151,8 +153,11 @@ check_dist_cmd="Rscript $bindir/check_distribution.r -outfile $distfile"
 desc_cmd="perl $bindir/add_description.pl -f 1 -h true"
 bbh_cmd="perl $bindir/find_best_blast.pl -type $seqtype -blastdir $blastdir"
 bth_cmd="perl $bindir/find_best_tblastn.pl -blastdir $tblastndir"
-names_cmd="perl $bindir/add_names.pl -nf 3 -af 1 -m add -t $table_def"
-
+case $structure in
+	"old") names_cmd="perl $bindir/add_names.pl -nf 1 -af 3 -m add -t $table_def";;
+	"new") names_cmd="perl $bindir/add_names.pl -nf 3 -af 1 -m add -t $table_def";;
+esac
+	
 #individuazione checkpoint
 if [ $custom_source ]; then
 	do_download=0
@@ -165,7 +170,9 @@ if [ $skip ]; then
 	"blast") do_blast=0;;
 	"reformat") do_reformat=0;;
 	"ortholuge") do_ortholuge=0;;
-	"stat")do_stat=0;;
+	"merge") do_merge=0;;
+	"stat") do_stat=0;;
+	"filter") do_filter=0;;
 	"bbh") do_bbh=0;;
 	"bth") do_bth=0;;
 	"refine") do_refine=0;;
@@ -179,15 +186,16 @@ if [ $jump ]; then case $jump in
 	"blast") do_tree=0; do_download=0;;
 	"ortholuge") do_tree=0; do_download=0; do_blast=0; do_reformat=0; do_tblastn=0;;
 	"analysis") do_tree=0; do_download=0; do_blast=0; do_reformat=0; do_ortholuge=0; do_tblastn=0;;
+	"cleanup") do_tree=0; do_download=0; do_blast=0; do_reformat=0; do_ortholuge=0; do_tblastn=0; do_stat=0; do_bbh=0; do_bth=0; do_refine=0; do_merge=0; do_filter=0;;
 	*) echo "Argomento errato per -jump-to"; exit;;
 esac; fi
 
 if [ $quit ]; then case $quit in
-	"tree") do_download=0; do_tblastn=0; do_blast=0; do_reformat=0; do_ortholuge=0; do_stat=0; do_bbh=0; do_bth=0; do_refine=0;;
-	"download") do_tblastn=0; do_blast=0; do_reformat=0; do_ortholuge=0; do_stat=0; do_bbh=0; do_bth=0; do_refine=0;;
-	"blast") do_ortholuge=0; do_stat=0; do_bbh=0; do_bth=0; do_refine=0;;
-	"ortholuge") do_stat=0; do_bbh=0; do_bth=0; do_refine=0;;
-	"stat") do_bbh=0; do_bth=0; do_refine=0;;
+	"tree") do_download=0; do_tblastn=0; do_blast=0; do_reformat=0; do_ortholuge=0; do_stat=0; do_bbh=0; do_bth=0; do_refine=0; do_merge=0; do_filter=0;;
+	"download") do_tblastn=0; do_blast=0; do_reformat=0; do_ortholuge=0; do_stat=0; do_bbh=0; do_bth=0; do_refine=0; do_merge=0; do_filter=0;;
+	"blast") do_ortholuge=0; do_stat=0; do_bbh=0; do_bth=0; do_refine=0; do_merge=0; do_filter=0;;
+	"ortholuge") do_stat=0; do_bbh=0; do_bth=0; do_refine=0; do_merge=0; do_filter=0;;
+	"stat") do_bbh=0; do_bth=0; do_refine=0; do_merge=0; do_filter=0;;
 	*) echo "Argomento errato per -quit-after"; exit;;
 esac; fi
 
@@ -455,7 +463,6 @@ else
 	raworg=$rawgendir/`basename $baseorg .$suffix`.${protsuf}
 fi
 desc_cmd="$desc_cmd -g $raworg"
-pairs_list=`while read line; do echo $line | awk '{print $1"_"$2}'; done < $guidefile | uniq`
 
 #se l'opzione nofilt è attiva
 if [ $nofilt == 1 ]; then
@@ -464,131 +471,138 @@ else
 	echo "Filtro attivo"
 fi
 
-echo -e "Query\tIngroup\tMean\tStdev\tMedian\tMad" > $statfile
-
-echo "Calcolo statistiche e filtro risultati"
-for dir in $pairs_list; do
-	#qui metto il calcolo delle statistiche
-	dir=$ortrawdir/$dir
-	filename=`basename $dir | awk -F_ '{print $1"_"$2"_"$3"_"$4"_"$5"_"$6"__"$4"_"$5"_"$6".txt"}'`
-	filepath=$dir/$filename
-	if [ $do_stat == 1 ]; then
-		$stat_calc_cmd -infile $filepath
-	fi
-	if [ ! -d $ortfiltdir/`basename $dir` ]; then mkdir $ortfiltdir/` basename $dir`; fi
-	if [ ! -d $unfiltdir/`basename $dir` ]; then mkdir $unfiltdir/` basename $dir`; fi
-	for file in $dir/*; do
-	if [ $nofilt == 1 ]; then
-		cut -f 1,2,3 $file > $unfiltdir/`basename $dir`/`basename $file`
-	else
-		cut -f 1,2,3 $file > $unfiltdir/`basename $dir`/`basename $file`
-		$ort_filter_cmd -infile $file > $ortfiltdir/`basename $dir`/`basename $file`
-	fi
+if [ $do_filter == 1 -o $do_stat == 1 ]; then
+	pairs_list=`while read line; do echo $line | awk '{print $1"_"$2}'; done < $guidefile | uniq`
+	echo "Calcolo statistiche e filtro risultati"
+	echo -e "Query\tIngroup\tMean\tStdev\tMedian\tMad" > $statfile
+	for dir in $pairs_list; do
+		#qui metto il calcolo delle statistiche
+		dir=$ortrawdir/$dir
+		filename=`basename $dir | awk -F_ '{print $1"_"$2"_"$3"_"$4"_"$5"_"$6"__"$4"_"$5"_"$6".txt"}'`
+		filepath=$dir/$filename
+		if [ $do_stat == 1 ]; then
+			$stat_calc_cmd -infile $filepath
+		fi
+		if [ $do_filter == 1  ]; then
+			if [ ! -d $ortfiltdir/`basename $dir` ]; then mkdir $ortfiltdir/` basename $dir`; fi
+			if [ ! -d $unfiltdir/`basename $dir` ]; then mkdir $unfiltdir/` basename $dir`; fi
+			for file in $dir/*; do
+				cut -f 1,2,3 $file > $unfiltdir/`basename $dir`/`basename $file`
+				if [ $nofilt == 0 ]; then
+					$ort_filter_cmd -infile $file > $ortfiltdir/`basename $dir`/`basename $file`
+				fi
+			done
+		fi
 	done
-done
+fi
 #creata una cartella coi risultati filtrati e una coi risultati non filtrati
 
 #se il filtro è attivo si procede con l'unire i file in entrambe le cartelle, altrimenti solo in quella dei non filtrati
 
 #merging nella directory dei non filtrati - da fare sempre
-echo "Unione outwalking"
-for dir in $pairs_list; do
-	dir=$unfiltdir/$dir
-	dirdim=`ls -1 $dir| wc -l`
-	if [ $dirdim == 1 ]; then 
-		cp $dir/* $tmpunfiltdir/`basename ${dir}`.txt
-	else
-		out_first=$dir/`ls -1 $dir | head -1`
-		out_merge_cmd="$out_merge_cmd -s $out_first"
-		for out_second in `ls -1 $dir | tail -n +2`; do
-			out_second=$dir/$out_second
-			$out_merge_cmd -a $out_second > $tmpfile
-			mv $tmpfile $out_first
+if [ $do_merge == 1 ]; then
+	echo "Unione outwalking"
+	for dir in $pairs_list; do
+		
+		dir=$unfiltdir/$dir
+		dirdim=`ls -1 $dir| wc -l`
+		if [ $dirdim == 1 ]; then 
+			cp $dir/* $tmpunfiltdir/`basename ${dir}`.txt
+		else
+			out_first=$dir/`ls -1 $dir | head -1`
+			cp $out_first $tmpdir/out_first.txt
+			out_first="$tmpdir/out_first.txt"
+			out_merge_cmd="$out_merge_cmd -s $out_first"
+			for out_second in `ls -1 $dir | tail -n +2`; do
+				out_second=$dir/$out_second
+				$out_merge_cmd -a $out_second > $tmpfile
+				mv $tmpfile $out_first
+			done
+			cp $out_first $tmpunfiltdir/`basename ${dir}`.txt
+		fi
+	done
+	exit
+	#merging nella directory dei filtrati - da fare solo quando serve
+	if [ $nofilt == 0 ]; then
+		for dir in $pairs_list; do
+			dir=$ortfiltdir/$dir
+			dirdim=`ls -1 $dir| wc -l`
+			if [ $dirdim == 1 ]; then 
+				cp $dir/* $tmpfiltdir/`basename ${dir}`.txt
+			else
+				out_first=$dir/`ls -1 $dir | head -1`
+				out_merge_cmd="$out_merge_cmd -s $out_first"
+				for out_second in `ls -1 $dir | tail -n +2`; do
+					out_second=$dir/$out_second
+					$out_merge_cmd -a $out_second > $tmpfile
+					mv $tmpfile $out_first
+				done
+				cp $out_first $tmpfiltdir/`basename ${dir}`.txt
+			fi
 		done
-		cp $out_first $tmpunfiltdir/`basename ${dir}`.txt
 	fi
-done
 
-#merging nella directory dei filtrati - da fare solo quando serve
-if [ $nofilt == 0 ]; then
-for dir in $pairs_list; do
-	dir=$ortfiltdir/$dir
-	dirdim=`ls -1 $dir| wc -l`
-	if [ $dirdim == 1 ]; then 
-		cp $dir/* $tmpfiltdir/`basename ${dir}`.txt
-	else
-		out_first=$dir/`ls -1 $dir | head -1`
-		out_merge_cmd="$out_merge_cmd -s $out_first"
-		for out_second in `ls -1 $dir | tail -n +2`; do
-			out_second=$dir/$out_second
-			$out_merge_cmd -a $out_second > $tmpfile
-			mv $tmpfile $out_first
+	#filtro consenso: se è uguale a 0 bisogna passare entrambe le cartelle
+	echo "Filtro consenso"
+	if [ $nofilt == 0 ]; then
+		for file in $tmpfiltdir/*; do
+			$ccount_cmd -f $file > $tmpfile
+			$cfilt_cmd -file $tmpfile -nofilt false > $file
 		done
-		cp $out_first $tmpfiltdir/`basename ${dir}`.txt
+		for file in $tmpunfiltdir/*; do
+			$ccount_cmd -f $file > $tmpfile
+			$cfilt_cmd -file $tmpfile -nofilt true > $file
+		done
+	else
+		for file in $tmpunfiltdir/*; do
+			$ccount_cmd -f $file > $tmpfile
+			$cfilt_cmd -file $tmpfile -nofilt true > $file
+		done
 	fi
-done
-fi
 
-#filtro consenso: se è uguale a 0 bisogna passare entrambe le cartelle
-echo "Filtro consenso"
-if [ $nofilt == 0 ]; then
-	for file in $tmpfiltdir/*; do
-		$ccount_cmd -f $file > $tmpfile
-		$cfilt_cmd -file $tmpfile -nofilt false > $file
-	done
-	for file in $tmpunfiltdir/*; do
-		$ccount_cmd -f $file > $tmpfile
-		$cfilt_cmd -file $tmpfile -nofilt true > $file
-	done
-else
-	for file in $tmpunfiltdir/*; do
-		$ccount_cmd -f $file > $tmpfile
-		$cfilt_cmd -file $tmpfile -nofilt true > $file
-	done
-fi
-
-#paddare e tagliare
-for file in $tmpunfiltdir/*; do 
-	$pad_cmd -f $file > $tmpfile
-	cut -f 1,2 $tmpfile > $file
-	rm $tmpfile
-done
-if [ $nofilt == 0 ]; then
-	for file in $tmpfiltdir/*; do 
+	#paddare e tagliare
+	for file in $tmpunfiltdir/*; do 
 		$pad_cmd -f $file > $tmpfile
 		cut -f 1,2 $tmpfile > $file
 		rm $tmpfile
 	done
-fi
+	if [ $nofilt == 0 ]; then
+		for file in $tmpfiltdir/*; do 
+			$pad_cmd -f $file > $tmpfile
+			cut -f 1,2 $tmpfile > $file
+			rm $tmpfile
+		done
+	fi
 
-#unire l'inwalking
-echo "Unione Inwalking"
-in_first=$tmpunfiltdir/`ls -1 $tmpunfiltdir | head -1`
-in_merge_cmd="$in_merge_cmd -s $in_first"
-for in_second in `ls -1 $tmpunfiltdir | tail -n +2`; do
-	in_second=$tmpunfiltdir/$in_second
-	$in_merge_cmd -a $in_second > $tmpfile
-	mv $tmpfile $in_first
-done
-cp $in_first $outunfiltfile
-
-if [ $nofilt == 0 ]; then
-	in_first=$tmpfiltdir/`ls -1 $tmpfiltdir | head -1`
+	#unire l'inwalking
+	echo "Unione Inwalking"
+	in_first=$tmpunfiltdir/`ls -1 $tmpunfiltdir | head -1`
 	in_merge_cmd="$in_merge_cmd -s $in_first"
-	for in_second in `ls -1 $tmpfiltdir | tail -n +2`; do
-		in_second=$tmpfiltdir/$in_second
+	for in_second in `ls -1 $tmpunfiltdir | tail -n +2`; do
+		in_second=$tmpunfiltdir/$in_second
 		$in_merge_cmd -a $in_second > $tmpfile
 		mv $tmpfile $in_first
 	done
-	cp $in_first $outfiltfile
-fi
+	cp $in_first $outunfiltfile
+	
+	if [ $nofilt == 0 ]; then
+		in_first=$tmpfiltdir/`ls -1 $tmpfiltdir | head -1`
+		in_merge_cmd="$in_merge_cmd -s $in_first"
+		for in_second in `ls -1 $tmpfiltdir | tail -n +2`; do
+			in_second=$tmpfiltdir/$in_second
+			$in_merge_cmd -a $in_second > $tmpfile
+			mv $tmpfile $in_first
+		done
+		cp $in_first $outfiltfile
+	fi
 
-#unire i file
-if [ $nofilt == 0 ]; then
-	echo "Merging finale"
-	$ort_merge_cmd -filtered $outfiltfile -unfiltered $outunfiltfile > $outfile
-else
-	cp $outunfiltfile $outfile
+	#unire i file
+	if [ $nofilt == 0 ]; then
+		echo "Merging finale"
+		$ort_merge_cmd -filtered $outfiltfile -unfiltered $outunfiltfile > $outfile
+	else
+		cp $outunfiltfile $outfile
+	fi
 fi
 
 #controllo statistiche - da qui in poi cambiare
@@ -642,12 +656,13 @@ fi
 #cleanup
 if [ $do_cleanup == 1 ]; then
 	echo "Cleanup"
-	rm -r $tmpdir
-	rm -r $orttmpdir
-	rm -r $ortfiltdir
-	rm -r $unfiltdir
-	rm -r $blasttmpdir
-	rm $outfiltfile $outunfiltfile
+	if [ -d $tmpdir ]; then rm -r $tmpdir; fi
+	if [ -d $orttmpdir ]; then rm -r $orttmpdir; fi
+	if [ -d $ortfiltdir ]; then rm -r $ortfiltdir; fi
+	if [ -d $unfiltdir ]; then rm -r $unfiltdir; fi
+	if [ -d $blasttmpdir ]; then rm -r $blasttmpdir; fi
+	if [ -r $outfiltfile ]; then rm $outfiltfile; fi
+	if [ -r $outunfiltfile ]; then rm $outunfiltfile; fi
 fi
 	
 echo "Operazione completata"

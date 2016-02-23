@@ -42,10 +42,17 @@ l.r1<-m1+(c1*s1)
 l.r2<-m2+(c2*s2)
 l.r3l<-m3-(c3*s3)
 l.r3u<-m3+(c3*s3)
-cat(c(names(tab)[1:2],names(tab)[2]),sep="\t")
+
+if (names(tab)[3]!=paste(c(names(tab)[2],".1"),collapse="")) {
+	third.name<-names(tab)[3]
+} else {
+	third.name<-names(tab)[2]
+}
+
+cat(c(names(tab)[1:2],third.name),sep="\t")
 cat("\n")
 outtab<-as.matrix(tab[tab$r1<l.r1 & tab$r2<l.r2 & tab$r3>l.r3l & tab$r3<l.r3u,])
-if (names(tab)[3]!=paste0(c(names(tab)[2],".1"),collapse="")) {
+if (names(tab)[3]!=paste(c(names(tab)[2],".1"),collapse="")) {
 	for (i in 1:nrow(outtab)){
 		cat(outtab[i,1:3],sep="\t")
 		cat("\n")

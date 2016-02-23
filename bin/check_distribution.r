@@ -1,10 +1,8 @@
 #!/usr/bin/R
 
-#calcola di quante stdev gli ssd deviano dalla media
-
 options(warn = -1)
 
-#acquisire opzioni
+#acquire options
 options = commandArgs()[6:length(commandArgs())]
 num=length(options)
 if (num == 0 | num%%2 != 0) q()

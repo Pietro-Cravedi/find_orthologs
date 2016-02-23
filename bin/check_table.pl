@@ -18,9 +18,9 @@ for ($i=0;$i<=$#ARGV;$i++){
 	}
 }
 
-die ("check_table.pl: -table non specificato\n") if (!$table);
-die ("check_table.pl: -list non specificato\n") if (!$infile);
-die ("check_table.pl: -out non specificato\n") if (!$outfile);
+die ("check_table.pl: -table not provided\n") if (!$table);
+die ("check_table.pl: -list not provided\n") if (!$infile);
+die ("check_table.pl: -out not provided\n") if (!$outfile);
 
 my @list;
 my @good;
@@ -40,11 +40,11 @@ elsif ($type eq "old"){
 	$ti=1;
 }
 else{
-	die ("check_table.pl: valore non valido per -type\n");
+	die ("check_table.pl: invalid value for -type\n");
 }
 
 #creare array con i taxid necessari
-open (Fhi,"<$infile") or die ("check_table.pl: Impossibile aprire $infile\n");
+open (Fhi,"<$infile") or die ("check_table.pl: $infile not found\n");
 while (<Fhi>){
 	chomp;
 	$pattern='\d{3}_(\d+)';
@@ -53,7 +53,7 @@ while (<Fhi>){
 }
 close Fhi;
 
-open (Fhi,"<$table") or die ("check_table.pl: Impossibile aprire $table\n");
+open (Fhi,"<$table") or die ("check_table.pl: $table not found\n");
 while(<Fhi>){
 	chomp;
 	my @line = split(/\t/,$_);
@@ -67,22 +67,22 @@ while(<Fhi>){
 close Fhi;
 
 `rm $outfile` if (-e $outfile);
-open (Fho,">>$outfile") or die ("Impossibile creare o modificare $outfile\n");
+open (Fho,">>$outfile") or die ("Can't open or append to $outfile\n");
 foreach $org(@list) {
 	if (!$taxids{$org}){
-		print ("check_table.pl: salto $org - Taxid non presente in tabella\n");
+		print ("check_table.pl: skipping $org - Taxid not found in table\n");
 		next;
 	}
 	elsif ($ans{$org} eq "-"){
-		print ("check_table.pl: salto $org - AN corrispondente non presente in tabella\n");
+		print ("check_table.pl: skipping $org - AN not found in the table\n");
 		next;
 	}
 	elsif ($names{$org} eq "-"){
-		print ("check_table.pl: salto $org - Nome organismo corrispondente non presente in tabella\n");
+		print ("check_table.pl: skipping $org - Organism name not found in the table\n");
 		next;
 	}
 	elsif ($paths{$org} eq "-"){
-		print ("check_table.pl: salto $org - Percorso sito ftp NCBI non presente in tabella\n");
+		print ("check_table.pl: skipping $org - NCBI ftp path not found in the table\n");
 		next;
 	}
 	else {

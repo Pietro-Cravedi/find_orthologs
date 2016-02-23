@@ -1,18 +1,17 @@
 #!/usr/bin/perl -w
 
-#uso perl add_names.pl -m [replace/add] -i [file] -t [tabella di corrispondenza scaricata dal sito NCBI] -af [colonna con gli AN] -nf [colonna con i nomi di organismo]
-#aggiunge i nomi degli organismi sopra le intestazioni di colonna (se sono AN)
+#usage perl add_names.pl -m [replace/add] -i [file] -t [correspondence table] -af [AN column] -nf [names column]
 
 $mode="add";
 
 for ($i=0;$i<=$#ARGV;$i++){
 	if ($ARGV[$i] eq "-i"){
 		$infile = $ARGV[$i+1] if ($ARGV[$i+1]);
-		die ("add_names.pl: $infile non trovato\n") if (!-e $infile);
+		die ("add_names.pl: $infile not found\n") if (!-e $infile);
 	}
 	elsif ($ARGV[$i] eq "-t"){
 		$table = $ARGV[$i+1]  if ($ARGV[$i+1]);
-		die ("add_names.pl: $table non trovato\n") if (!-e $table);
+		die ("add_names.pl: $table not found\n") if (!-e $table);
 	}
 	elsif ($ARGV[$i] eq "-af"){
 		$accfield = $ARGV[$i+1]  if ($ARGV[$i+1]);
@@ -22,17 +21,17 @@ for ($i=0;$i<=$#ARGV;$i++){
 	}
 	elsif ($ARGV[$i] eq "-m"){
 		$mode = $ARGV[$i+1]  if ($ARGV[$i+1]);
-		die ("add_names.pl: -m può essere solo replace o add\n") if (not(($mode =~ "replace") or ($mode =~ "add"))); 
+		die ("add_names.pl: -m can only be replace or add\n") if (not(($mode =~ "replace") or ($mode =~ "add"))); 
 	}
 }
 
-die ("add_names.pl: Argomento -i non fornito\n") if (not $infile);
-die ("add_names.pl: Argomento -t non fornito\n") if (not $table);
-die ("add_names.pl: Argomento -af non fornito\n") if (not $accfield);
-die ("add_names.pl: Argomento -nf non fornito\n") if (not $namfield);
+die ("add_names.pl: Option -i not found\n") if (not $infile);
+die ("add_names.pl: Option -t not found\n") if (not $table);
+die ("add_names.pl: Option -af not found\n") if (not $accfield);
+die ("add_names.pl: Option -nf not found\n") if (not $namfield);
 
 
-#indicizzare la tabella - acc => nome
+#indiciZE TABLE - acc => name
 open (Fhi,"<$table");
 while (<Fhi>){
 	my @line = split(/\t/,$_);
@@ -43,7 +42,7 @@ while (<Fhi>){
 }
 close Fhi;
 
-#prendere la prima riga del file
+#fetch first line
 open (Fhi, "<$infile");
 while (<Fhi>){
 	chomp;
@@ -56,7 +55,7 @@ my @out;
 my @line = split(/\t/, $fline);
 
 foreach $an(@line){
-	push (@out, $table{$an});
+	($an eq "Description") ? push (@out, $an) : push (@out, $table{$an});
 }
 
 print (join("\t",@out[0..$#out]),"\n");

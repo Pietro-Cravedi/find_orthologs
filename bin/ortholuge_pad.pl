@@ -1,9 +1,6 @@
 #!/usr/bin/perl -w
 
-#modifica un file di output di ortholuge aggiungendo le sequenze che non hanno la terna di BRH
-#funziona anche su file di ortholuge filtrati con ortholuge_filter.pl
-#il file del genoma deve essere lo stesso usato per ortholuge
-#uso: perl ortholuge_pad.pl -f [file con ortologhi] -g [genoma] -t [true/false]
+#usage: perl ortholuge_pad.pl -f [ortholuge file] -g [genome] -t [true/false]
 
 
 for ($i=0;$i<=$#ARGV;$i++){
@@ -17,20 +14,20 @@ for ($i=0;$i<=$#ARGV;$i++){
 		$header = $ARGV[$i+1]  if ($ARGV[$i+1]);
 	}
 	elsif (($ARGV[$i] eq "-h") or ($ARGV[$i] eq "--help")) {
-		print "Aggiunge ad un file di output di ortholuge le sequenze per cui non è stata trovata una tripletta.\n";
-		print "Le sequenze sono prese da un file con tutte le sequenze proteiche dell'organismo.\n\n";
-		print "Uso:\n\tperl ortholuge_pad.pl [PARAMETRI]\n\n";
-		print "Opzioni disponibili:\n";
-		print "\t-f [FILE]\tFile con i risultati di ortholuge. Può essere con o senza distanze. I rapporti vanno rimossi.\n";
-		print "\t-g [FILE]\tFile con le sequenze proteiche dell'organismo query in formato FASTA.\n";
-		print "\t-h|--help\t Visualizza l'help per lo script.\n\n";
-		print "-f e -g sono obbligatori.\n";
+		print "Adds to an ortholuge file the triplets for which a triple BRH was not found.\n";
+		print "The sequence list is taken from organism proteome.\n\n";
+		print "Usage:\n\tperl ortholuge_pad.pl [OPTIONS]\n\n";
+		print "Options:\n";
+		print "\t-f [FILE]\tOrtholuge file. Can be with or without distances. Ratios must be removed.\n";
+		print "\t-g [FILE]\tFASTA format proteome file.\n";
+		print "\t-h|--help\t Prints help.\n\n";
+		print "-f and -g are mandatory.\n";
 		die ("\n");
 	}
 }
 
-die ("ortholuge_pad.pl: Mancano uno o più parametri obbligatori.\n") if ((not $ortfile) or (not $genome));
-die ("ortholuge_pad.pl: -t può essere solo true o false\n") if (not(($header eq "true") or ($header eq "false")));
+die ("ortholuge_pad.pl: One or more mandatory options are missing\n") if ((not $ortfile) or (not $genome));
+die ("ortholuge_pad.pl: -t can only be true or false\n") if (not(($header eq "true") or ($header eq "false")));
 
 my @anlist;
 my %ortholuge;
@@ -39,7 +36,7 @@ my @frame;
 
 #recuperare AN
 $/=">";
-open (Fhi,"<$genome") or die ("ortholuge_pad.pl: $genome non trovato\n");
+open (Fhi,"<$genome") or die ("ortholuge_pad.pl: $genome not found\n");
 while (<Fhi>){
 	chomp;
 	if (/(\w\w_\d+)\n/){
@@ -55,15 +52,19 @@ close Fhi;
 $/="\n";
 
 #identifica il tipo di file e sceglie il padder
-open (Fhi,"<$ortfile") or die ("ortholuge_pad.pl: $ortfile non trovato\n");
+open (Fhi,"<$ortfile") or die ("ortholuge_pad.pl: $ortfile not found\n");
 $i=0;
 while (<Fhi>){
 	if ($header eq "true" and $i == 0){
 		$i=1;
-		next;
+		my @b = split (/\t/, $_);
+		for ($i=1;$i<=$#b;$i++){
+			push (@frame, "-");
+		}
+		last;
 	}
-	my @b = split (/\t/, $_);
-	for ($i=1;$i<=$#b;$i++){
+	my @c = split (/\t/, $_);
+	for ($i=1;$i<=$#c;$i++){
 		push (@frame, "-");
 	}
 last;

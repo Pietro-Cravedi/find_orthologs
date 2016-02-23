@@ -2,7 +2,7 @@
 
 options(warn = -1)
 
-#acquisire opzioni
+#fetch options
 options = commandArgs()[6:length(commandArgs())]
 num=length(options)
 if (num == 0 | num%%2 != 0) q()
@@ -13,7 +13,7 @@ for (i in 1:(length(options)-1)){
 	if (opt == "-outfile") arg->outfile
 }
 
-#calcolo statistiche
+#calculate means
 tab<-read.table(file=infile,header=TRUE,dec=".")
 media<-mean(tab[,4])
 stdev<-sd(tab[,4])

@@ -30,7 +30,7 @@ do_merge=1
 do_filter=1
 
 
-#acquisizione argomenti
+#get options
 while [ $1 ]; do
 	case $1 in
 		"-source-dir") shift; custom_source=$1;;
@@ -42,14 +42,14 @@ while [ $1 ]; do
 		"-jump-to") shift; jump=$1;;
 		"-quit-after") shift; quit=$1;;
 		"-bindir") shift; bindir=$1;;
-		"-tree") shift; tree=$1;;			#obbligatorio
-		"-begin") shift; firstorg=$1;;		#obbligatorio
-		"-query") shift; query=$1;;			#obbligatorio
+		"-tree") shift; tree=$1;;			#mandatory
+		"-begin") shift; firstorg=$1;;		#mandatory
+		"-query") shift; query=$1;;			#mandatory
 		"-outgroup") shift; out_taxid=$1;;
-		"-stop") shift; lastorg=$1;;		#obbligatorio
-		"-type") shift; seqtype=$1;;		#obbligatorio
+		"-stop") shift; lastorg=$1;;		#mandatory
+		"-type") shift; seqtype=$1;;		#mandatory
 		"-expect") shift; expect=$1;;
-		"-ortholuge") shift; ortbindir=$1;;	#obbligatorio
+		"-ortholuge") shift; ortbindir=$1;;	#mandatory
 		"-workdir") shift; workdir=$1;;
 		"-nofilt") nofilt=1;;
 		"-mode") shift; mode=$1;;
@@ -57,26 +57,25 @@ while [ $1 ]; do
 		"-c2") shift; c2=$1;;
 		"-c3") shift; c3=$1;;
 		"-cons") shift; clim=$1;;
-		"-coeff") shift; coeff=$1;; #coefficiente per il controllo statistico
 		"-make-dir") makedir=1;;
 		"-help") cat ./README.txt; exit;;
-		*) echo "Opzione errata: $1"; exit;;
+		*) echo "Invalid option: $1"; exit;;
 	esac
 	shift
 done
 
-#controlli su argomenti
-if [ ! -d $ortbindir ]; then echo "-ortbindir non esiste o non è una directory"; exit; fi
-if [ ! -d $bindir ]; then echo "-bindir non esiste o non è una directory"; exit; fi
-#if [ $custom_source -a ! -d $custom_source ]; then echo "-source-dir non esiste o non è una directory"; exit; fi
-if [ ! $seqtype ]; then echo "-seqtype non specificato"; exit; fi
-if [ ! $tree ]; then echo "-tree non specificato"; exit; fi
-if [ ! $query ]; then echo "-query non specificato"; exit; fi
-if [ ! $lastorg ]; then echo "-stop non specificato"; exit; fi
-if [ ! $firstorg ]; then echo "-begin non specificato"; exit; fi
-if [ $table_location != "online" -a $table_location != "offline" ]; then echo "-table_location può essere solo online o offline"; exit; fi
+#control options
+if [ ! -d $ortbindir ]; then echo "-ortbindir does not exist or is not a directory"; exit; fi
+if [ ! -d $bindir ]; then echo "-bindir does not exist or is not a directory"; exit; fi
+#if [ $custom_source -a ! -d $custom_source ]; then echo "-source-dir does not exist or is not a directory"; exit; fi
+if [ ! $seqtype ]; then echo "-seqtype not specified"; exit; fi
+if [ ! $tree ]; then echo "-tree not specified"; exit; fi
+if [ ! $query ]; then echo "-query not specified"; exit; fi
+if [ ! $lastorg ]; then echo "-stop not specified"; exit; fi
+if [ ! $firstorg ]; then echo "-begin not specified"; exit; fi
+if [ $table_location != "online" -a $table_location != "offline" ]; then echo "-table_location can only be online or offline"; exit; fi
 
-#inizializzazione variabili - cartelle
+#variables initialization - directories
 homedir=`pwd`
 sourcedir="$workdir/source/"
 if [ $custom_source ]; then sourcedir=$custom_source; fi
@@ -86,7 +85,7 @@ tblastndir="$workdir/tblastn/"
 tmpdir="$workdir/tmp_$query/"
 tmpfiltdir="$tmpdir/filtered_$query/"
 tmpunfiltdir="$tmpdir/unfiltered_$query/"
-orttmpdir="$workdir/ortholuge_tmp_$query/" #directory dove lavora ortholuge - ha $query nel nome per consentire operazioni parallele
+orttmpdir="$workdir/ortholuge_tmp_$query/" #directory where ortholuge works
 case $structure in
 	"old")rawgendir="$sourcedir/raw_genomes/";refgendir="$sourcedir/ref_genomes/";rawwholegendir="$sourcedir/raw_whole_genomes/"; refwholegendir="$sourcedir/ref_whole_genomes/";;
 	"new")refgendir="$sourcedir/sequences/";refwholegendir="$sourcedir/whole_genomes/";;
@@ -98,7 +97,7 @@ guidedir="$workdir/guide_files/"
 ortfiltdir="$workdir/ortholuge_filtered_$query/"
 unfiltdir="$workdir/ortholuge_unfiltered_$query/"
 
-#inizializzazione variabili - file
+#variables initialization - files
 settings="$guidedir/settings.txt"
 trim_tree="$guidedir/trimmed_tree_$query.txt"
 tmpfile="$workdir/tmpfile_$query.txt"
@@ -125,7 +124,7 @@ outunfiltfile="$workdir/unfiltered_output_$query.txt"
 outfile="${outfile}_c_${clim}.txt"
 n_outfile="$workdir/n_`basename ${outfile}`"
 
-#inizializzazione variabili - comandi
+#variables initialization - commands
 tree2trip_cmd="Rscript $bindir/tree2triplets.r"
 trim_cmd="Rscript $bindir/trim_tree.r"
 taxid2genomes_cmd="perl $bindir/taxid2genomes.pl"
@@ -158,7 +157,7 @@ case $structure in
 	"new") names_cmd="perl $bindir/add_names.pl -nf 3 -af 1 -m add -t $table_def";;
 esac
 	
-#individuazione checkpoint
+#setting checkpoints
 if [ $custom_source ]; then
 	do_download=0
 fi
@@ -177,7 +176,7 @@ if [ $skip ]; then
 	"bth") do_bth=0;;
 	"refine") do_refine=0;;
 	"cleanup") do_cleanup=0;;
-	*) echo "Argomento errato per -skip"; exit;;
+	*) echo "Wrong value for -skip"; exit;;
 	esac; done
 fi
 
@@ -187,7 +186,7 @@ if [ $jump ]; then case $jump in
 	"ortholuge") do_tree=0; do_download=0; do_blast=0; do_reformat=0; do_tblastn=0;;
 	"analysis") do_tree=0; do_download=0; do_blast=0; do_reformat=0; do_ortholuge=0; do_tblastn=0;;
 	"cleanup") do_tree=0; do_download=0; do_blast=0; do_reformat=0; do_ortholuge=0; do_tblastn=0; do_stat=0; do_bbh=0; do_bth=0; do_refine=0; do_merge=0; do_filter=0;;
-	*) echo "Argomento errato per -jump-to"; exit;;
+	*) echo "Wrong value for -jump-to"; exit;;
 esac; fi
 
 if [ $quit ]; then case $quit in
@@ -196,21 +195,23 @@ if [ $quit ]; then case $quit in
 	"blast") do_ortholuge=0; do_stat=0; do_bbh=0; do_bth=0; do_refine=0; do_merge=0; do_filter=0;;
 	"ortholuge") do_stat=0; do_bbh=0; do_bth=0; do_refine=0; do_merge=0; do_filter=0;;
 	"stat") do_bbh=0; do_bth=0; do_refine=0; do_merge=0; do_filter=0;;
-	*) echo "Argomento errato per -quit-after"; exit;;
+	*) echo "Wrong value for -quit-after"; exit;;
 esac; fi
 
-#definizione suffisso genomi e settings per il sito NCBI
+#defining genomes suffix
 case $seqtype in 
 	"protein") suffix=$protsuf; formatdb_cmd="$formatdb_cmd -p T"; genpath="$refgendir"; downloadtype="protein";;
 	"dna") suffix=$dnasuf; formatdb_cmd="$formatdb_cmd -p T"; genpath="$tragendir"; downloadtype="cds";;
 	*) echo "-type può essere solo protein o dna"; exit;;
 esac
+
+#deciding folder structure
 case $structure in
 	"old")fields='1,2,9,24';;
 	"new")fields='1,6,8,20';;
 esac
 
-#creazione cartelle
+#directories creation
 if [ ! -d $workdir ]; then mkdir $workdir; fi
 if [ ! -d $sourcedir ]; then mkdir $sourcedir; fi
 if [ ! -d $blastdir ]; then mkdir $blastdir; fi
@@ -230,9 +231,9 @@ if [ ! -d $guidedir ]; then mkdir $guidedir; fi
 if [ ! -d $ortfiltdir ]; then mkdir $ortfiltdir; fi
 if [ ! -d $unfiltdir ]; then mkdir $unfiltdir; fi
 
-if [ $makedir == 1 ]; then echo "Struttura cartelle creata"; exit; fi
+if [ $makedir == 1 ]; then echo "Folder structure set up"; exit; fi
 
-#creare file con le impostazioni
+#create settings file
 echo "Query: $query" >> $settings
 echo "Start: $firstorg" >> $settings
 echo "Stop: $lastorg" >> $settings
@@ -251,18 +252,18 @@ echo "Outfile: `basename ${n_outfile}`" >> $settings
 echo "" >> $settings
 
 if [ $do_tree == 1 ]; then
-	#analisi albero
+	#tree analysis
 	$trim_cmd -tree $tree -first $firstorg -query $query -last $lastorg -outfile $trim_tree -outgroup ${out_taxid}
 	$tree2trip_cmd -tree $trim_tree -query $query -outfile $taxidguide -outlist $taxidlist
 
-	#recuperare tabella di conversione
+	#retrieve conversion table
 	if [ $table_location == "online" ]; then
 		wget -qO $table_raw $source_tab
 	else
 		if [ -r $source_tab ]; then cp $source_tab $table_raw; else echo "Percorso tabella non valido"; exit; fi
 	fi
 	
-	#correzione generica
+	#correct table if specified
 	if [ $purge ]; then
 		for an in ${purge//,/ }; do
 			grep $an $table_raw -v > $tmpfile
@@ -271,7 +272,7 @@ if [ $do_tree == 1 ]; then
 	fi
 	cut -f $fields $table_raw | tail -n +2 > $table_int
 	$check_cmd -table $table_int -list $taxidlist -out $table_def > $table_log
-	while read line; do #rimuove i taxid degli organismi saltati dai file guida
+	while read line; do #remove taxids for which problems were found
 		taxid=`echo $line|awk '{print $3}'`
 		grep -v $taxid $taxidlist > $tmpfile
 		mv $tmpfile $taxidlist
@@ -279,43 +280,44 @@ if [ $do_tree == 1 ]; then
 		mv $tmpfile $taxidguide
 	done < $table_log
 	
-	#conversione dei taxid in an
+	#conversion taxid to ANs
 	$taxid2genomes_cmd -table $table_def -file $taxidguide -type triplets > $guidefile
 	$taxid2genomes_cmd -table $table_def -file $taxidlist -type list > $orglist
 	if [ -r $tmpfile ]; then rm $tmpfile; fi
 else
-	echo "Salto lo step di analisi dell'albero"
+	echo "Skipping tree analysis"
 fi
 
-#primo checkpoint
-echo "Primo checkpoint raggiunto"
+#first checkpoint
+echo "First checkpoint reached"
 
-#controllare se c'è il file guida, in caso di skip, verificare che sia nella cartella archivio
+#verify existence of guide files in case the tree analysis step is skipped
 if [ ! -r $guidefile ]; then
-	echo "Manca il file $guidefile"; exit
+	echo "Missing $guidefile"; exit
 fi
 
 if [ ! -r $orglist ]; then
-	echo "Manca il file $orglist"; exit
+	echo "Missing $orglist"; exit
 fi
 
 if [ ! -r $table_def ]; then
-	echo "Manca il file $table_def"; exit
+	echo "Missing $table_def"; exit
 fi
 
 if [ $do_download == 1 ]; then
-	#download genomi
+	#download genomes
 	$download_cmd -table $table_def -file $orglist -type $downloadtype -outdir $refgendir
 	$download_cmd -table $table_def -file $orglist -type genomic -outdir $refwholegendir
 else
-	echo "Salto lo step di download"
+	echo "Skipping download step"
 fi
 
-#primo checkpoint - fin qui tutto ok
-echo "Secondo checkpoint raggiunto"
+#second checkpoint
+echo "Second checkpoint reached"
 
-#effettuare i blast - solo quelli richiesti
-#riformattare i genomi
+#do blasts - only required ones
+
+#reformat genomes header lines
 if [ $do_reformat == 1 ]; then
 	for gen in $rawgendir/*; do
 		$reformat_db_cmd -db $gen > $refgendir/`basename $gen`
@@ -328,10 +330,10 @@ if [ $do_reformat == 1 ]; then
 	fi
 fi
 	
-#impostazioni preliminari
+#preliminary settings
 if [ $expect ]; then blastall_cmd="$blastall_cmd -e $expect"; tblastn_cmd="$tblastn_cmd -e $expect"; fi
 	
-#fare i tblastn
+#do tblastn
 if [ $do_tblastn == 1 ]; then 
 	while read line; do
 		org1=`echo $line|awk '{print $1}'`
@@ -354,7 +356,7 @@ else
 	echo "tblastn non eseguiti"
 fi
 	
-#scorrere il file guida e fare i blast
+#read guide file and do blasts
 if [ $do_blast == 1 ]; then
 	while read line; do
 		org1=`echo $line|awk '{print $1}'`
@@ -407,10 +409,10 @@ if [ $do_blast == 1 ]; then
 		echo ""
 	done < $guidefile
 else
-	echo "Salto lo step di blast"
+	echo "Skipping blast step"
 fi
 
-echo "Terzo checkpoint raggiunto"
+echo "Third checkpoint reached"
 
 #ortholuge
 if [ $do_ortholuge == 1 ]; then
@@ -422,7 +424,7 @@ if [ $do_ortholuge == 1 ]; then
 		resfile="$resrawdir/${in1}_${in2}__${out}.txt"
 		if [ ! -d $resrawdir ]; then mkdir $resrawdir; fi
 		if [ ! -r $resfile ]; then
-			#controllare eventuali sovrapposizioni
+			#check for blast files existence
 			ingroup1="$refgendir/${in1:4}.${suffix}"
 			ingroup2="$refgendir/${in2:4}.${suffix}"
 			outgroup="$refgendir/${out:4}.${suffix}"
@@ -440,20 +442,20 @@ if [ $do_ortholuge == 1 ]; then
 			if [ -r $blastOv2 ]; then cp $blastOv2 $orttmpdir/; else echo "Manca $blastOv2"; exit; fi
 			$ortholuge_cmd --ingroup1 $ingroup1  --ingroup2 $ingroup2 --outgroup $outgroup
 			echo "$ingroup1 $ingroup2 $outgroup"
-			#mette anche le intestazioni
+			#write header line
 			echo -e "${in1:4}\t${in2:4}\t${out:4}\td_in1_in2\td_in1_out\td_in2_out\tr1\tr2\tr3" > $resfile
 			cat $orttmpdir/triplet.out >> $resfile
 			rm $orttmpdir/*
 		fi
 	done < $guidefile
 else 
-	echo "Salto lo step di ortholuge"
+	echo "Skipping ortholuge step"
 fi
 
-#quarto checkpoint
-echo "Quarto checkpoint raggiunto"
+#fourth checkpoint
+echo "Fourth checkpoint reached"
 
-#inizializzare variabili che servono da qui in poi - bisogna usare i file di proteomi per le descrizioni
+#initializing variables needed downstream
 q=`cut -f1 $guidefile | uniq`
 baseorg=$refgendir/${q:4}.$suffix
 pad_cmd="$pad_cmd -g $baseorg"
@@ -464,19 +466,18 @@ else
 fi
 desc_cmd="$desc_cmd -g $raworg"
 
-#se l'opzione nofilt è attiva
 if [ $nofilt == 1 ]; then
-	echo "Filtro disattivato"
+	echo "Filter inactive"
 else
-	echo "Filtro attivo"
+	echo "Filter active"
 fi
 
 if [ $do_filter == 1 -o $do_stat == 1 ]; then
 	pairs_list=`while read line; do echo $line | awk '{print $1"_"$2}'; done < $guidefile | uniq`
-	echo "Calcolo statistiche e filtro risultati"
+	echo "Statistic calculation and results filter"
 	echo -e "Query\tIngroup\tMean\tStdev\tMedian\tMad" > $statfile
 	for dir in $pairs_list; do
-		#qui metto il calcolo delle statistiche
+		#column means calculation
 		dir=$ortrawdir/$dir
 		filename=`basename $dir | awk -F_ '{print $1"_"$2"_"$3"_"$4"_"$5"_"$6"__"$4"_"$5"_"$6".txt"}'`
 		filepath=$dir/$filename
@@ -495,15 +496,11 @@ if [ $do_filter == 1 -o $do_stat == 1 ]; then
 		fi
 	done
 fi
-#creata una cartella coi risultati filtrati e una coi risultati non filtrati
 
-#se il filtro è attivo si procede con l'unire i file in entrambe le cartelle, altrimenti solo in quella dei non filtrati
-
-#merging nella directory dei non filtrati - da fare sempre
+#merging unfiltered results
 if [ $do_merge == 1 ]; then
-	echo "Unione outwalking"
+	echo "Merging outwalking"
 	for dir in $pairs_list; do
-		
 		dir=$unfiltdir/$dir
 		dirdim=`ls -1 $dir| wc -l`
 		if [ $dirdim == 1 ]; then 
@@ -521,8 +518,8 @@ if [ $do_merge == 1 ]; then
 			cp $out_first $tmpunfiltdir/`basename ${dir}`.txt
 		fi
 	done
-	exit
-	#merging nella directory dei filtrati - da fare solo quando serve
+	
+	#merging filtered results
 	if [ $nofilt == 0 ]; then
 		for dir in $pairs_list; do
 			dir=$ortfiltdir/$dir
@@ -531,6 +528,8 @@ if [ $do_merge == 1 ]; then
 				cp $dir/* $tmpfiltdir/`basename ${dir}`.txt
 			else
 				out_first=$dir/`ls -1 $dir | head -1`
+				cp $out_first $tmpdir/out_first.txt
+				out_first="$tmpdir/out_first.txt"
 				out_merge_cmd="$out_merge_cmd -s $out_first"
 				for out_second in `ls -1 $dir | tail -n +2`; do
 					out_second=$dir/$out_second
@@ -542,8 +541,8 @@ if [ $do_merge == 1 ]; then
 		done
 	fi
 
-	#filtro consenso: se è uguale a 0 bisogna passare entrambe le cartelle
-	echo "Filtro consenso"
+	#consensus filter
+	echo "Consensus filter"
 	if [ $nofilt == 0 ]; then
 		for file in $tmpfiltdir/*; do
 			$ccount_cmd -f $file > $tmpfile
@@ -560,7 +559,7 @@ if [ $do_merge == 1 ]; then
 		done
 	fi
 
-	#paddare e tagliare
+	#pad and cut
 	for file in $tmpunfiltdir/*; do 
 		$pad_cmd -f $file > $tmpfile
 		cut -f 1,2 $tmpfile > $file
@@ -574,8 +573,8 @@ if [ $do_merge == 1 ]; then
 		done
 	fi
 
-	#unire l'inwalking
-	echo "Unione Inwalking"
+	#merging inwalking
+	echo "Merging inwalking"
 	in_first=$tmpunfiltdir/`ls -1 $tmpunfiltdir | head -1`
 	in_merge_cmd="$in_merge_cmd -s $in_first"
 	for in_second in `ls -1 $tmpunfiltdir | tail -n +2`; do
@@ -596,51 +595,50 @@ if [ $do_merge == 1 ]; then
 		cp $in_first $outfiltfile
 	fi
 
-	#unire i file
+	#final merging
 	if [ $nofilt == 0 ]; then
-		echo "Merging finale"
+		echo "Final merging"
 		$ort_merge_cmd -filtered $outfiltfile -unfiltered $outunfiltfile > $outfile
 	else
 		cp $outunfiltfile $outfile
 	fi
 fi
 
-#controllo statistiche - da qui in poi cambiare
+#statistics calculation
 if [ $do_stat == 1 ]; then
-	#generare i file full e ssd, quindi applicare read_distances e check_distribution
+	#generate full and ssd files, then run read_distances and check_distribution
 	cp $outfile $fullfile
 	$parse_results_cmd -file $fullfile > $ssdfile
 	$read_dist_cmd -file $fullfile > $fullmatfile
 	$read_dist_cmd -file $ssdfile > $ssdmatfile
 	$check_dist_cmd -ssd-matrix $ssdmatfile -full-matrix $fullmatfile
 fi
-#fine cambiamenti
 
 if [ $do_bbh == 1 ]; then
-	echo "Ricerca bbh"
+	echo "BBH search"
 	$bbh_cmd -file $outfile > $tmpfile
 	mv $tmpfile $outfile
 else
-	echo "Salto ricerca bbh"
+	echo "Skipping BBH search"
 fi
 
 if [ $do_bth == 1 ]; then
-	echo "Ricerca bth"
+	echo "BTH search"
 	$bth_cmd -file $outfile -query $baseorg > $tmpfile
 	mv $tmpfile $outfile
 else
-	echo "Salto ricerca bth"
+	echo "Skipping BTH search"
 fi
 
-#rimuovere duplicati bbh
+#remove BBH duplicates
 if [ $do_bbh == 1 ]; then
 	$remdup_bbh_cmd -file $outfile > $tmpfile
 	mv $tmpfile $outfile
 fi
 
-#aggiungere descrizioni
+#add descriptions
 if [ $do_refine == 1 ]; then
-	echo "Aggiunta descrizioni e nomi organismi"
+	echo "Adding descriptions and organisms names"
 	if [ $seqtype == "protein" ]; then
 		$desc_cmd -o $outfile > $tmpfile
 		mv $tmpfile $outfile
@@ -648,8 +646,7 @@ if [ $do_refine == 1 ]; then
 		cp $in_first $outfile
 	fi
 
-
-	#aggiungere nomi organismi
+	#add names
 	$names_cmd -i $outfile > ${n_outfile}
 fi
 
@@ -665,4 +662,4 @@ if [ $do_cleanup == 1 ]; then
 	if [ -r $outunfiltfile ]; then rm $outunfiltfile; fi
 fi
 	
-echo "Operazione completata"
+echo "Operation complete"

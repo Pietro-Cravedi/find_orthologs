@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 
-#uso perl add_description.pl -o [file ortholuge] -g [genoma] -f [colonna del file (1..n)] -h [true/false]
+#usage perl add_description.pl -o [ortholuge file] -g [genome] -f [file column (1..n)] -h [true/false]
 
 my %descr;
 my %ort;
@@ -21,23 +21,24 @@ for ($i=0;$i<=$#ARGV;$i++){
 	}
 }
 
-die ("add_description.pl: Argomento -o non fornito\n") if (not $ortfile);
-die ("add_description.pl: Argomento -g non fornito\n") if (not $genome);
-die ("add_description.pl: Argomento -f non fornito\n") if (not $field);
-die ("add_description.pl: -h può essere solo true o false\n") if (not(($header eq "true") or ($header eq "false")));
+die ("add_description.pl: Option -o not provided\n") if (not $ortfile);
+die ("add_description.pl: Option -g not provided\n") if (not $genome);
+die ("add_description.pl: Option -f not provided\n") if (not $field);
+die ("add_description.pl: -h can only be true or false\n") if (not(($header eq "true") or ($header eq "false")));
 
-#recuperare le intestazioni
+#fetch headers
 if ($header eq "true"){
-	open (Fhi,"<$ortfile") or die ("add_description.pl: $ortfile non trovato\n");
+	open (Fhi,"<$ortfile") or die ("add_description.pl: $ortfile not found\n");
 	while (<Fhi>){
+		chomp;
 		$titles=$_;
 		last;
 	}
 	close Fhi;
 }
 
-#reperirie ed indicizzare descrizioni
-open (Fhi,"<$genome") or die ("add_description.pl: $genome non trovato\n");
+#fetch and indicize descriptions
+open (Fhi,"<$genome") or die ("add_description.pl: $genome not found\n");
 $/=">";
 $cont=0;
 while (<Fhi>){
@@ -56,8 +57,8 @@ while (<Fhi>){
 $/="\n";
 close Fhi;
 
-#indicizzare file ortholuge
-open (Fhi,"<$ortfile") or die ("add_description.pl: $ortfile non trovato\n");
+#indicize ortholuge file
+open (Fhi,"<$ortfile") or die ("add_description.pl: $ortfile not found\n");
 my $i=0;
 while (<Fhi>){
 	if ($header eq "true" and $i==0){
@@ -72,7 +73,7 @@ while (<Fhi>){
 }
 close Fhi;
 
-print ($titles) if ($titles);
+print ("$titles\tDescription\n") if ($titles);
 foreach $k(keys %ort){
 	print "$ort{$k}\t$descr{$k}\n";
 }
